@@ -10,8 +10,9 @@ import {
   SignOut,
   CaretDoubleLeft,
   CaretDoubleRight,
-  Briefcase,
 } from "@phosphor-icons/react"
+
+import Image from "next/image"
 
 import { cn } from "@/lib/utils"
 import { useUIStore } from "@/stores/uiStore"
@@ -64,9 +65,13 @@ export function Sidebar(): React.JSX.Element {
       )}
     >
       <div className="flex h-[52px] items-center gap-2 px-3">
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10">
-          <Briefcase weight="duotone" className="h-4 w-4 text-primary" />
-        </div>
+        <Image
+          src="/favicon.ico"
+          alt="JejakKarier"
+          width={28}
+          height={28}
+          className="shrink-0 rounded-md"
+        />
         {!sidebarCollapsed && (
           <span className="text-sm font-semibold tracking-tight text-foreground">
             JejakKarier

@@ -2,8 +2,8 @@
 
 import { useState, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import Image from "next/image"
 import {
-  Briefcase,
   EnvelopeSimple,
   LockSimple,
   Eye,
@@ -155,7 +155,13 @@ export function LoginForm() {
 
         <div className="relative z-10 max-w-[380px] px-8 text-center">
           <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-2xl border border-primary/20 bg-primary/5">
-            <Briefcase weight="duotone" className="h-8 w-8 text-primary" />
+            <Image
+              src="/favicon.ico"
+              alt="JejakKarier"
+              width={40}
+              height={40}
+              className="rounded-lg"
+            />
           </div>
           <h2 className="mt-6 text-2xl font-semibold tracking-tighter text-foreground">
             Kelola Lamaran Kerja<br />dengan Strategi
