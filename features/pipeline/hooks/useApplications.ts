@@ -109,8 +109,11 @@ export function useUpdateApplication() {
       }
       toast.error("Gagal memperbarui lamaran")
     },
-    onSettled: () => {
+    onSettled: (_data, _err, variables) => {
       queryClient.invalidateQueries({ queryKey: ["applications"] })
+      if (variables.id) {
+        queryClient.invalidateQueries({ queryKey: ["status_history", variables.id] })
+      }
     },
   })
 }

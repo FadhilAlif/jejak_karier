@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Buildings,
   MapPin,
@@ -10,11 +10,13 @@ import {
   CalendarBlank,
   Trash,
   PencilSimple,
+  FloppyDisk,
+  X,
   Clock,
   ArrowRight,
   PaperPlaneTilt,
-  X,
   Warning,
+  Check,
 } from "@phosphor-icons/react"
 
 import { cn } from "@/lib/utils"
@@ -34,6 +36,7 @@ import {
   STATUS_COLORS,
   JOB_TYPE_LABELS,
   APPLICATION_STATUSES,
+  JOB_TYPES,
   type ApplicationStatus,
   type JobType,
 } from "@/lib/constants"
@@ -47,6 +50,7 @@ import {
 } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -97,7 +101,46 @@ export function JobDetailModal({
   const [noteContent, setNoteContent] = useState("")
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
+  const [isEditing, setIsEditing] = useState(false)
+  const [editForm, setEditForm] = useState({
+    company_name: "",
+    role: "",
+    job_type: "",
+    location: "",
+    salary_range: "",
+    job_url: "",
+    description: "",
+  })
+
   const application = applications.find((a) => a.id === applicationId)
+
+  useEffect(() => {
+    if (application && isEditing) {
+      setEditForm({
+        company_name: application.company_name ?? "",
+        role: application.role ?? "",
+        job_type: application.job_type ?? "",
+        location: application.location ?? "",
+        salary_range: application.salary_range ?? "",
+        job_url: application.job_url ?? "",
+        description: application.description ?? "",
+      })
+    }
+  }, [application, isEditing])
+
+  useEffect(() => {
+    if (application) {
+      setEditForm({
+        company_name: application.company_name ?? "",
+        role: application.role ?? "",
+        job_type: application.job_type ?? "",
+        location: application.location ?? "",
+        salary_range: application.salary_range ?? "",
+        job_url: application.job_url ?? "",
+        description: application.description ?? "",
+      })
+    }
+  }, [application?.id])
 
   if (!application) {
     return (
@@ -117,6 +160,42 @@ export function JobDetailModal({
   function handleStatusChange(newStatus: string): void {
     if (!applicationId) return
     updateApplication.mutate({ id: applicationId, status: newStatus })
+  }
+
+  function handleSaveEdit(): void {
+    if (!applicationId) return
+    updateApplication.mutate(
+      {
+        id: applicationId,
+        company_name: editForm.company_name.trim() || undefined,
+        role: editForm.role.trim() || undefined,
+        job_type: editForm.job_type || null,
+        location: editForm.location.trim() || null,
+        salary_range: editForm.salary_range.trim() || null,
+        job_url: editForm.job_url.trim() || null,
+        description: editForm.description.trim() || null,
+      },
+      {
+        onSuccess: () => {
+          setIsEditing(false)
+        },
+      }
+    )
+  }
+
+  function handleCancelEdit(): void {
+    setIsEditing(false)
+    if (application) {
+      setEditForm({
+        company_name: application.company_name ?? "",
+        role: application.role ?? "",
+        job_type: application.job_type ?? "",
+        location: application.location ?? "",
+        salary_range: application.salary_range ?? "",
+        job_url: application.job_url ?? "",
+        description: application.description ?? "",
+      })
+    }
   }
 
   function handleAddNote(): void {
@@ -167,39 +246,94 @@ export function JobDetailModal({
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent className="w-full border-border bg-card sm:max-w-[480px] p-0 flex flex-col gap-0">
           <SheetHeader className="px-5 pt-5 pb-0 space-y-0">
-            {/* Title — close button is handled by Sheet's built-in X */}
             <div className="flex-1 min-w-0 pr-6">
-              <SheetTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Buildings weight="duotone" className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <span className="truncate">{application.company_name}</span>
-              </SheetTitle>
-              <p className="mt-0.5 text-xs text-muted-foreground pl-6">
-                {application.role}
-              </p>
+              {isEditing ? (
+                <div className="space-y-2">
+                  <Input
+                    value={editForm.company_name}
+                    onChange={(e) => setEditForm((f) => ({ ...f, company_name: e.target.value }))}
+                    className="h-7 text-sm font-semibold"
+                    placeholder="Nama perusahaan"
+                  />
+                  <Input
+                    value={editForm.role}
+                    onChange={(e) => setEditForm((f) => ({ ...f, role: e.target.value }))}
+                    className="h-6 text-xs text-muted-foreground"
+                    placeholder="Posisi"
+                  />
+                </div>
+              ) : (
+                <>
+                  <SheetTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Buildings weight="duotone" className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="truncate">{application.company_name}</span>
+                  </SheetTitle>
+                  <p className="mt-0.5 text-xs text-muted-foreground pl-6">
+                    {application.role}
+                  </p>
+                </>
+              )}
             </div>
 
-            {/* Action bar below title */}
             <div className="flex items-center justify-end gap-1 pt-3">
-              <Tooltip>
-                <TooltipTrigger asChild>
+              {isEditing ? (
+                <>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 gap-1 px-2 text-[10px] text-muted-foreground hover:text-destructive"
-                    onClick={() => setDeleteConfirmOpen(true)}
+                    className="h-6 gap-1 px-2 text-[10px] text-muted-foreground"
+                    onClick={handleCancelEdit}
                   >
-                    <Trash className="h-3 w-3" />
-                    <span>Hapus</span>
+                    <X className="h-3 w-3" />
+                    <span>Batal</span>
                   </Button>
-                </TooltipTrigger>
-                <TooltipContent className="text-xs">Hapus lamaran ini</TooltipContent>
-              </Tooltip>
+                  <Button
+                    size="sm"
+                    className="h-6 gap-1 px-2 text-[10px]"
+                    onClick={handleSaveEdit}
+                    disabled={updateApplication.isPending}
+                  >
+                    <FloppyDisk className="h-3 w-3" />
+                    <span>{updateApplication.isPending ? "Menyimpan..." : "Simpan"}</span>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 gap-1 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                        onClick={() => setIsEditing(true)}
+                      >
+                        <PencilSimple className="h-3 w-3" />
+                        <span>Edit</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="text-xs">Edit lamaran</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 gap-1 px-2 text-[10px] text-muted-foreground hover:text-destructive"
+                        onClick={() => setDeleteConfirmOpen(true)}
+                      >
+                        <Trash className="h-3 w-3" />
+                        <span>Hapus</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="text-xs">Hapus lamaran ini</TooltipContent>
+                  </Tooltip>
+                </>
+              )}
             </div>
           </SheetHeader>
 
           <ScrollArea className="flex-1">
             <div className="px-5 py-4 space-y-5">
-              {/* Ghosting Alert */}
               {ghosting && (
                 <div className="flex items-center gap-2 rounded-md border border-red-500/20 bg-red-500/5 px-3 py-2">
                   <Warning weight="fill" className="h-4 w-4 text-red-400 shrink-0" />
@@ -210,16 +344,12 @@ export function JobDetailModal({
                 </div>
               )}
 
-              {/* Metadata Grid */}
               <div className="grid grid-cols-2 gap-3">
-                {/* Status */}
-                <MetaField
-                  icon={Clock}
-                  label="Status"
-                >
+                <MetaField icon={Clock} label="Status">
                   <Select
                     value={application.status}
                     onValueChange={handleStatusChange}
+                    disabled={isEditing}
                   >
                     <SelectTrigger
                       className={cn(
@@ -239,37 +369,68 @@ export function JobDetailModal({
                   </Select>
                 </MetaField>
 
-                {/* Job Type */}
                 <MetaField icon={Briefcase} label="Tipe Kerja">
-                  <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
-                    {application.job_type
-                      ? JOB_TYPE_LABELS[application.job_type as JobType] ?? application.job_type
-                      : "—"}
-                  </Badge>
+                  {isEditing ? (
+                    <Select
+                      value={editForm.job_type || "onsite"}
+                      onValueChange={(v) => setEditForm((f) => ({ ...f, job_type: v }))}
+                    >
+                      <SelectTrigger className="h-6 text-[10px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {JOB_TYPES.map((t) => (
+                          <SelectItem key={t} value={t} className="text-xs">
+                            {JOB_TYPE_LABELS[t as JobType]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                      {application.job_type
+                        ? JOB_TYPE_LABELS[application.job_type as JobType] ?? application.job_type
+                        : "—"}
+                    </Badge>
+                  )}
                 </MetaField>
 
-                {/* Location */}
                 <MetaField icon={MapPin} label="Lokasi">
-                  <span className="text-[12px] text-foreground">
-                    {application.location || "—"}
-                  </span>
+                  {isEditing ? (
+                    <Input
+                      value={editForm.location}
+                      onChange={(e) => setEditForm((f) => ({ ...f, location: e.target.value }))}
+                      className="h-6 text-[11px]"
+                      placeholder="cth. Jakarta"
+                    />
+                  ) : (
+                    <span className="text-[12px] text-foreground">
+                      {application.location || "—"}
+                    </span>
+                  )}
                 </MetaField>
 
-                {/* Salary */}
                 <MetaField icon={CurrencyDollar} label="Gaji">
-                  <span className="text-[12px] font-medium text-emerald-400/80">
-                    {application.salary_range || "—"}
-                  </span>
+                  {isEditing ? (
+                    <Input
+                      value={editForm.salary_range}
+                      onChange={(e) => setEditForm((f) => ({ ...f, salary_range: e.target.value }))}
+                      className="h-6 text-[11px]"
+                      placeholder="cth. Rp 15-25 jt"
+                    />
+                  ) : (
+                    <span className="text-[12px] font-medium text-emerald-400/80">
+                      {application.salary_range || "—"}
+                    </span>
+                  )}
                 </MetaField>
 
-                {/* Created */}
                 <MetaField icon={CalendarBlank} label="Ditambahkan">
                   <span className="text-[11px] text-muted-foreground">
                     {formatDate(application.created_at)}
                   </span>
                 </MetaField>
 
-                {/* Last Activity */}
                 <MetaField icon={Clock} label="Aktivitas Terakhir">
                   <span className="text-[11px] text-muted-foreground">
                     {formatDate(application.last_activity_date)}
@@ -278,33 +439,55 @@ export function JobDetailModal({
               </div>
 
               {/* Job URL */}
-              {application.job_url && (
-                <a
-                  href={application.job_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-[11px] text-muted-foreground transition-snappy hover:bg-accent/30 hover:text-foreground"
-                >
-                  <ArrowSquareOut className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate">{application.job_url}</span>
-                </a>
+              {isEditing ? (
+                <MetaField icon={ArrowSquareOut} label="URL Lowongan">
+                  <Input
+                    value={editForm.job_url}
+                    onChange={(e) => setEditForm((f) => ({ ...f, job_url: e.target.value }))}
+                    className="h-6 text-[11px]"
+                    placeholder="https://..."
+                    type="url"
+                  />
+                </MetaField>
+              ) : (
+                application.job_url && (
+                  <a
+                    href={application.job_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-[11px] text-muted-foreground transition-snappy hover:bg-accent/30 hover:text-foreground"
+                  >
+                    <ArrowSquareOut className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{application.job_url}</span>
+                  </a>
+                )
               )}
 
               {/* Description */}
-              {application.description && (
-                <div>
-                  <p className="text-[11px] font-medium text-muted-foreground mb-1.5">
-                    Deskripsi
-                  </p>
-                  <p className="text-[12px] leading-relaxed text-foreground/80 whitespace-pre-wrap">
-                    {application.description}
-                  </p>
-                </div>
+              {isEditing ? (
+                <MetaField icon={Briefcase} label="Deskripsi">
+                  <Textarea
+                    value={editForm.description}
+                    onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
+                    className="min-h-[80px] resize-none text-xs"
+                    placeholder="Catatan singkat tentang posisi ini..."
+                  />
+                </MetaField>
+              ) : (
+                application.description && (
+                  <div>
+                    <p className="text-[11px] font-medium text-muted-foreground/60 mb-1.5">
+                      Deskripsi
+                    </p>
+                    <p className="text-[12px] leading-relaxed text-foreground/80 whitespace-pre-wrap">
+                      {application.description}
+                    </p>
+                  </div>
+                )
               )}
 
               <Separator className="opacity-30" />
 
-              {/* Tabs: Notes + Timeline */}
               <Tabs defaultValue="notes" className="w-full">
                 <TabsList className="w-full h-8 bg-muted/30 p-0.5">
                   <TabsTrigger
@@ -321,9 +504,7 @@ export function JobDetailModal({
                   </TabsTrigger>
                 </TabsList>
 
-                {/* Notes Tab */}
                 <TabsContent value="notes" className="mt-3 space-y-3">
-                  {/* Add note input */}
                   <div className="flex gap-2">
                     <Textarea
                       value={noteContent}
@@ -350,7 +531,6 @@ export function JobDetailModal({
                     </Button>
                   </div>
 
-                  {/* Notes list */}
                   {notesLoading ? (
                     <div className="flex justify-center py-4">
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
@@ -384,7 +564,6 @@ export function JobDetailModal({
                   )}
                 </TabsContent>
 
-                {/* Timeline Tab */}
                 <TabsContent value="timeline" className="mt-3">
                   {historyLoading ? (
                     <div className="flex justify-center py-4">
@@ -396,12 +575,10 @@ export function JobDetailModal({
                     </p>
                   ) : (
                     <div className="relative space-y-0 pl-4">
-                      {/* Vertical line */}
                       <div className="absolute left-[7px] top-1 bottom-1 w-px bg-border" />
 
                       {history.map((entry) => (
                         <div key={entry.id} className="relative flex items-start gap-3 py-2">
-                          {/* Dot */}
                           <div className="absolute left-[-13px] top-[10px] h-2 w-2 rounded-full bg-muted-foreground/40" />
 
                           <div className="flex-1">
@@ -443,7 +620,6 @@ export function JobDetailModal({
         </SheetContent>
       </Sheet>
 
-      {/* Delete Confirmation */}
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <DialogContent className="max-w-sm border-border bg-card">
           <DialogHeader>
@@ -483,7 +659,6 @@ export function JobDetailModal({
   )
 }
 
-// ─── Metadata field helper ───
 function MetaField({
   icon: Icon,
   label,

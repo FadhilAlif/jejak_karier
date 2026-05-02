@@ -6,7 +6,6 @@ import { StatsCards } from "@/features/analytics/components/StatsCards"
 import { ConversionFunnel } from "@/features/analytics/components/ConversionFunnel"
 import { WeeklyActivity } from "@/features/analytics/components/WeeklyActivity"
 import { RecentActivity } from "@/features/analytics/components/RecentActivity"
-import { ScrollArea } from "@/components/ui/scroll-area"
 
 export default function AnalyticsPage() {
   const { data: analytics, isLoading } = useAnalytics()
@@ -28,7 +27,7 @@ export default function AnalyticsPage() {
   return (
     <>
       <Header title="Analitik" />
-      <ScrollArea className="flex-1">
+      <div className="flex-1 overflow-y-auto">
         <div className="space-y-5 p-5">
           {/* Stats Cards Row */}
           <StatsCards
@@ -50,7 +49,7 @@ export default function AnalyticsPage() {
           {/* Recent Activity */}
           <RecentActivity applications={analytics.recentActivity} />
         </div>
-      </ScrollArea>
+      </div>
     </>
   )
 }

@@ -35,7 +35,7 @@ export function WeeklyActivity({
       </p>
 
       <div className="h-[200px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
           <BarChart data={data} barSize={24} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
             <CartesianGrid
               strokeDasharray="3 3"
