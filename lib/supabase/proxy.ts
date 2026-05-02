@@ -44,7 +44,6 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
   ) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
-    url.pathname = '/login'
     url.search = ''
     return NextResponse.redirect(url)
   }
