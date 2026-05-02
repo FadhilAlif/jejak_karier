@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { usePathname } from "next/navigation"
 
 import {
@@ -14,8 +15,9 @@ import {
 
 import { cn } from "@/lib/utils"
 import { useUIStore } from "@/stores/uiStore"
-import { MOCK_USER } from "@/lib/mockAuth"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { useAuth } from "@/features/auth/hooks/useAuth"
+import { createClient } from "@/lib/supabase/client"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Tooltip,
   TooltipContent,
@@ -36,7 +38,23 @@ const NAV_ITEMS: NavItem[] = [
 
 export function Sidebar(): React.JSX.Element {
   const pathname = usePathname()
+  const router = useRouter()
   const { sidebarCollapsed, toggleSidebar } = useUIStore()
+  const { user, loading } = useAuth()
+
+  const displayName = user?.user_metadata?.full_name
+    ?? user?.user_metadata?.name
+    ?? user?.email?.split("@")[0]
+    ?? "User"
+
+  const avatarUrl = user?.user_metadata?.avatar_url ?? null
+
+  async function handleSignOut() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push("/login")
+    router.refresh()
+  }
 
   return (
     <aside
@@ -45,7 +63,6 @@ export function Sidebar(): React.JSX.Element {
         sidebarCollapsed ? "w-[52px]" : "w-[220px]"
       )}
     >
-      {/* Logo */}
       <div className="flex h-[52px] items-center gap-2 px-3">
         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10">
           <Briefcase weight="duotone" className="h-4 w-4 text-primary" />
@@ -59,7 +76,6 @@ export function Sidebar(): React.JSX.Element {
 
       <Separator className="opacity-50" />
 
-      {/* Navigation */}
       <nav className="flex-1 space-y-0.5 px-2 py-2">
         {NAV_ITEMS.map((item) => {
           const isActive = pathname.startsWith(item.href)
@@ -101,9 +117,7 @@ export function Sidebar(): React.JSX.Element {
 
       <Separator className="opacity-50" />
 
-      {/* Footer */}
       <div className="space-y-1 px-2 py-2">
-        {/* Collapse Toggle */}
         <button
           onClick={toggleSidebar}
           className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] text-muted-foreground transition-snappy hover:bg-accent/50 hover:text-foreground"
@@ -118,31 +132,36 @@ export function Sidebar(): React.JSX.Element {
           )}
         </button>
 
-        {/* User Info */}
-        <div className="flex items-center gap-2.5 rounded-md px-2.5 py-1.5">
-          <Avatar className="h-6 w-6 shrink-0">
-            <AvatarFallback className="bg-primary/10 text-[10px] font-semibold text-primary">
-              {MOCK_USER.full_name.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
-          {!sidebarCollapsed && (
-            <div className="flex flex-1 items-center justify-between">
-              <span className="truncate text-[12px] text-muted-foreground">
-                {MOCK_USER.full_name}
-              </span>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button className="text-muted-foreground transition-snappy hover:text-foreground">
-                    <SignOut className="h-3.5 w-3.5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="text-xs">
-                  Keluar
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          )}
-        </div>
+        {!loading && user && (
+          <div className="flex items-center gap-2.5 rounded-md px-2.5 py-1.5">
+            <Avatar className="h-6 w-6 shrink-0">
+              {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
+              <AvatarFallback className="bg-primary/10 text-[10px] font-semibold text-primary">
+                {displayName.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            {!sidebarCollapsed && (
+              <div className="flex flex-1 items-center justify-between">
+                <span className="truncate text-[12px] text-muted-foreground">
+                  {displayName}
+                </span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={handleSignOut}
+                      className="text-muted-foreground transition-snappy hover:text-foreground"
+                    >
+                      <SignOut className="h-3.5 w-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="text-xs">
+                    Keluar
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </aside>
   )

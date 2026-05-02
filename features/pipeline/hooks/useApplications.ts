@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 
 import { createClient } from "@/lib/supabase/client"
-import { MOCK_USER_ID } from "@/lib/mockAuth"
 
 import type { Tables, TablesInsert, TablesUpdate } from "@/types/supabase"
 
@@ -12,17 +11,19 @@ type Application = Tables<"applications">
 type ApplicationInsert = TablesInsert<"applications">
 type ApplicationUpdate = TablesUpdate<"applications">
 
-// ─── Fetch all applications for mock user ───
 export function useApplications() {
   const supabase = createClient()
 
   return useQuery<Application[]>({
     queryKey: ["applications"],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
       const { data, error } = await supabase
         .from("applications")
         .select("*")
-        .eq("user_id", MOCK_USER_ID)
+        .eq("user_id", user.id)
         .order("position", { ascending: true })
         .order("created_at", { ascending: false })
 
@@ -32,7 +33,6 @@ export function useApplications() {
   })
 }
 
-// ─── Create application ───
 export function useCreateApplication() {
   const supabase = createClient()
   const queryClient = useQueryClient()
@@ -41,9 +41,12 @@ export function useCreateApplication() {
     mutationFn: async (
       input: Omit<ApplicationInsert, "user_id" | "id">
     ) => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
       const { data, error } = await supabase
         .from("applications")
-        .insert({ ...input, user_id: MOCK_USER_ID })
+        .insert({ ...input, user_id: user.id })
         .select()
         .single()
 
@@ -60,7 +63,6 @@ export function useCreateApplication() {
   })
 }
 
-// ─── Update application (with optimistic update for drag-and-drop) ───
 export function useUpdateApplication() {
   const supabase = createClient()
   const queryClient = useQueryClient()
@@ -70,11 +72,14 @@ export function useUpdateApplication() {
       id,
       ...updates
     }: ApplicationUpdate & { id: string }) => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
       const { data, error } = await supabase
         .from("applications")
         .update(updates)
         .eq("id", id)
-        .eq("user_id", MOCK_USER_ID)
+        .eq("user_id", user.id)
         .select()
         .single()
 
@@ -82,15 +87,12 @@ export function useUpdateApplication() {
       return data
     },
     onMutate: async (updatedApp) => {
-      // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["applications"] })
 
-      // Snapshot previous value
       const previousApps = queryClient.getQueryData<Application[]>([
         "applications",
       ])
 
-      // Optimistically update
       queryClient.setQueryData<Application[]>(
         ["applications"],
         (old) =>
@@ -102,7 +104,6 @@ export function useUpdateApplication() {
       return { previousApps }
     },
     onError: (_err, _vars, context) => {
-      // Rollback on error
       if (context?.previousApps) {
         queryClient.setQueryData(["applications"], context.previousApps)
       }
@@ -114,18 +115,20 @@ export function useUpdateApplication() {
   })
 }
 
-// ─── Delete application ───
 export function useDeleteApplication() {
   const supabase = createClient()
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (id: string) => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
       const { error } = await supabase
         .from("applications")
         .delete()
         .eq("id", id)
-        .eq("user_id", MOCK_USER_ID)
+        .eq("user_id", user.id)
 
       if (error) throw error
     },

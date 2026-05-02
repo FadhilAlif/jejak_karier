@@ -29,24 +29,25 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
     }
   )
 
-  // Refresh session if it exists
-  await supabase.auth.getClaims()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  // NOTE: Auth redirect disabled for mock login during development.
-  // When Google OAuth is configured, uncomment the redirect below:
-  //
-  // const { data } = await supabase.auth.getClaims()
-  // const user = data?.claims
-  //
-  // if (
-  //   !user &&
-  //   !request.nextUrl.pathname.startsWith('/login') &&
-  //   !request.nextUrl.pathname.startsWith('/auth')
-  // ) {
-  //   const url = request.nextUrl.clone()
-  //   url.pathname = '/login'
-  //   return NextResponse.redirect(url)
-  // }
+  if (user && request.nextUrl.pathname.startsWith('/login')) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/pipeline'
+    return NextResponse.redirect(url)
+  }
+
+  if (
+    !user &&
+    !request.nextUrl.pathname.startsWith('/login') &&
+    !request.nextUrl.pathname.startsWith('/auth')
+  ) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    url.pathname = '/login'
+    url.search = ''
+    return NextResponse.redirect(url)
+  }
 
   return supabaseResponse
 }
