@@ -24,6 +24,7 @@ import {
   type JobType,
 } from "@/lib/constants"
 import { isGhosting, getGhostingDays } from "@/lib/ghosting"
+import { useUIStore } from "@/stores/uiStore"
 import { Badge } from "@/components/ui/badge"
 import {
   Select,
@@ -52,6 +53,7 @@ interface ListViewProps {
 export function ListView({ onSelectApp }: ListViewProps): React.JSX.Element {
   const { data: applications = [], isLoading } = useApplications()
   const updateApplication = useUpdateApplication()
+  const highlightedAppId = useUIStore((s) => s.highlightedAppId)
   const [sortField, setSortField] = useState<SortField>("created_at")
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc")
 
@@ -149,10 +151,12 @@ export function ListView({ onSelectApp }: ListViewProps): React.JSX.Element {
               return (
                 <tr
                   key={app.id}
+                  data-app-id={app.id}
                   onClick={() => onSelectApp(app.id)}
                   className={cn(
                     "group cursor-pointer border-b border-border transition-snappy hover:bg-accent/30",
-                    ghosting && "border-l-2 border-l-red-500/60"
+                    ghosting && "border-l-2 border-l-red-500/60",
+                    app.id === highlightedAppId && "bg-primary/10 ring-2 ring-inset ring-primary/40"
                   )}
                 >
                   {/* Company */}

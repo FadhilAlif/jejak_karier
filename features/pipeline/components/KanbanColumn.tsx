@@ -9,6 +9,7 @@ import {
   STATUS_COLORS,
   type ApplicationStatus,
 } from "@/lib/constants"
+import { useUIStore } from "@/stores/uiStore"
 import { JobCard } from "@/features/pipeline/components/JobCard"
 
 import type { Tables } from "@/types/supabase"
@@ -30,6 +31,7 @@ export function KanbanColumn({
   isDraggingOver,
   onSelectApp,
 }: KanbanColumnProps): React.JSX.Element {
+  const highlightedAppId = useUIStore((s) => s.highlightedAppId)
   // Track mouse position to differentiate click vs drag
   const mouseDownPos = useRef<{ x: number; y: number } | null>(null)
 
@@ -89,6 +91,7 @@ export function KanbanColumn({
                 <JobCard
                   application={app}
                   isDragging={draggableSnapshot.isDragging}
+                  isHighlighted={app.id === highlightedAppId}
                 />
               </div>
             )}

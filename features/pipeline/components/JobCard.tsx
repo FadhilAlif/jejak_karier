@@ -24,22 +24,26 @@ type Application = Tables<"applications">
 interface JobCardProps {
   application: Application
   isDragging: boolean
+  isHighlighted?: boolean
 }
 
 export function JobCard({
   application,
   isDragging,
+  isHighlighted = false,
 }: JobCardProps): React.JSX.Element {
   const ghosting = isGhosting(application.last_activity_date, application.status)
   const ghostingDays = getGhostingDays(application.last_activity_date)
 
   return (
     <div
+      data-app-id={application.id}
       className={cn(
         "w-full cursor-grab rounded-md border border-border bg-card p-3 text-left transition-snappy select-none",
         "hover:border-border/80 hover:bg-accent/30",
         isDragging && "rotate-1 scale-[1.02] shadow-lg shadow-black/20 border-primary/30 cursor-grabbing",
-        ghosting && "border-l-2 border-l-red-500/60"
+        ghosting && "border-l-2 border-l-red-500/60",
+        isHighlighted && "ring-2 ring-primary/40 border-primary/50"
       )}
     >
       {/* Company */}

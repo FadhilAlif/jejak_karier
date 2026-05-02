@@ -21,16 +21,15 @@ import {
   CommandSeparator,
 } from "@/components/ui/command"
 
-interface CommandPaletteProps {
-  onAddNew?: () => void
-}
-
-export function CommandPalette({ onAddNew }: CommandPaletteProps): React.JSX.Element {
+export function CommandPalette(): React.JSX.Element {
   const router = useRouter()
-  const { commandPaletteOpen, setCommandPaletteOpen } = useUIStore()
+  const {
+    commandPaletteOpen,
+    setCommandPaletteOpen,
+    setHighlightedAppId,
+  } = useUIStore()
   const { data: applications = [] } = useApplications()
 
-  // Keyboard shortcut: Cmd+K / Ctrl+K
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -46,22 +45,10 @@ export function CommandPalette({ onAddNew }: CommandPaletteProps): React.JSX.Ele
     return () => document.removeEventListener("keydown", handleKeyDown)
   }, [handleKeyDown])
 
-  function handleSelect(action: string): void {
+  function handleSelectApp(appId: string): void {
     setCommandPaletteOpen(false)
-
-    switch (action) {
-      case "add-new":
-        onAddNew?.()
-        break
-      case "go-pipeline":
-        router.push("/pipeline")
-        break
-      case "go-analytics":
-        router.push("/analytics")
-        break
-      default:
-        break
-    }
+    setHighlightedAppId(appId)
+    router.push("/pipeline")
   }
 
   return (
@@ -72,9 +59,12 @@ export function CommandPalette({ onAddNew }: CommandPaletteProps): React.JSX.Ele
           <p className="text-xs text-muted-foreground">Tidak ada hasil.</p>
         </CommandEmpty>
 
-        {/* Quick Actions */}
         <CommandGroup heading="Aksi Cepat">
-          <CommandItem onSelect={() => handleSelect("add-new")}>
+          <CommandItem onSelect={() => {
+            setCommandPaletteOpen(false)
+            setHighlightedAppId("__add_new__")
+            router.push("/pipeline")
+          }}>
             <Plus className="mr-2 h-4 w-4" />
             <span>Tambah Lamaran Baru</span>
           </CommandItem>
@@ -82,19 +72,23 @@ export function CommandPalette({ onAddNew }: CommandPaletteProps): React.JSX.Ele
 
         <CommandSeparator />
 
-        {/* Navigation */}
         <CommandGroup heading="Navigasi">
-          <CommandItem onSelect={() => handleSelect("go-pipeline")}>
+          <CommandItem onSelect={() => {
+            setCommandPaletteOpen(false)
+            router.push("/pipeline")
+          }}>
             <Kanban className="mr-2 h-4 w-4" />
             <span>Pipeline Lamaran</span>
           </CommandItem>
-          <CommandItem onSelect={() => handleSelect("go-analytics")}>
+          <CommandItem onSelect={() => {
+            setCommandPaletteOpen(false)
+            router.push("/analytics")
+          }}>
             <ChartBar className="mr-2 h-4 w-4" />
             <span>Analitik</span>
           </CommandItem>
         </CommandGroup>
 
-        {/* Search Applications */}
         {applications.length > 0 && (
           <>
             <CommandSeparator />
@@ -103,11 +97,7 @@ export function CommandPalette({ onAddNew }: CommandPaletteProps): React.JSX.Ele
                 <CommandItem
                   key={app.id}
                   value={`${app.company_name} ${app.role}`}
-                  onSelect={() => {
-                    setCommandPaletteOpen(false)
-                    // Navigate to pipeline and the app will be shown
-                    router.push("/pipeline")
-                  }}
+                  onSelect={() => handleSelectApp(app.id)}
                 >
                   <MagnifyingGlass className="mr-2 h-4 w-4 text-muted-foreground" />
                   <div className="flex flex-col">
