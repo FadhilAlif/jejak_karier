@@ -1,4 +1,7 @@
+"use client"
+
 import { Sidebar } from "@/components/layout/Sidebar"
+import { CommandPalette } from "@/components/layout/CommandPalette"
 
 export default function DashboardLayout({
   children,
@@ -11,6 +14,7 @@ export default function DashboardLayout({
       <main className="flex flex-1 flex-col overflow-hidden">
         {children}
       </main>
+      <CommandPalette />
     </div>
   )
 }

@@ -24,27 +24,21 @@ type Application = Tables<"applications">
 interface JobCardProps {
   application: Application
   isDragging: boolean
-  isSelected: boolean
-  onSelect: () => void
 }
 
 export function JobCard({
   application,
   isDragging,
-  isSelected,
-  onSelect,
 }: JobCardProps): React.JSX.Element {
   const ghosting = isGhosting(application.last_activity_date, application.status)
   const ghostingDays = getGhostingDays(application.last_activity_date)
 
   return (
-    <button
-      onClick={onSelect}
+    <div
       className={cn(
-        "w-full cursor-grab rounded-md border border-border bg-card p-3 text-left transition-snappy",
+        "w-full cursor-grab rounded-md border border-border bg-card p-3 text-left transition-snappy select-none",
         "hover:border-border/80 hover:bg-accent/30",
-        isDragging && "rotate-1 scale-[1.02] shadow-lg shadow-black/20 border-primary/30",
-        isSelected && "ring-1 ring-primary/40 border-primary/30",
+        isDragging && "rotate-1 scale-[1.02] shadow-lg shadow-black/20 border-primary/30 cursor-grabbing",
         ghosting && "border-l-2 border-l-red-500/60"
       )}
     >
@@ -61,10 +55,12 @@ export function JobCard({
         {ghosting && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <Warning
-                weight="fill"
-                className="h-3.5 w-3.5 shrink-0 text-red-400 animate-pulse"
-              />
+              <span>
+                <Warning
+                  weight="fill"
+                  className="h-3.5 w-3.5 shrink-0 text-red-400 animate-pulse"
+                />
+              </span>
             </TooltipTrigger>
             <TooltipContent className="text-xs">
               Tidak ada aktivitas selama {ghostingDays} hari
@@ -110,6 +106,6 @@ export function JobCard({
           {application.salary_range}
         </p>
       )}
-    </button>
+    </div>
   )
 }

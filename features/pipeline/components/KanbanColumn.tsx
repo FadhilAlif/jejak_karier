@@ -1,5 +1,6 @@
 "use client"
 
+import { useRef } from "react"
 import { Draggable, type DroppableProvided } from "@hello-pangea/dnd"
 
 import { cn } from "@/lib/utils"
@@ -19,8 +20,7 @@ interface KanbanColumnProps {
   applications: Application[]
   provided: DroppableProvided
   isDraggingOver: boolean
-  selectedAppId: string | null
-  onSelectApp: (id: string | null) => void
+  onSelectApp: (id: string) => void
 }
 
 export function KanbanColumn({
@@ -28,9 +28,11 @@ export function KanbanColumn({
   applications,
   provided,
   isDraggingOver,
-  selectedAppId,
   onSelectApp,
 }: KanbanColumnProps): React.JSX.Element {
+  // Track mouse position to differentiate click vs drag
+  const mouseDownPos = useRef<{ x: number; y: number } | null>(null)
+
   return (
     <div
       className={cn(
@@ -69,14 +71,24 @@ export function KanbanColumn({
                 ref={draggableProvided.innerRef}
                 {...draggableProvided.draggableProps}
                 {...draggableProvided.dragHandleProps}
+                onPointerDown={(e) => {
+                  mouseDownPos.current = { x: e.clientX, y: e.clientY }
+                }}
+                onClick={(e) => {
+                  // Only treat as click if mouse didn't move much (not a drag)
+                  if (mouseDownPos.current) {
+                    const dx = Math.abs(e.clientX - mouseDownPos.current.x)
+                    const dy = Math.abs(e.clientY - mouseDownPos.current.y)
+                    if (dx < 5 && dy < 5) {
+                      onSelectApp(app.id)
+                    }
+                  }
+                  mouseDownPos.current = null
+                }}
               >
                 <JobCard
                   application={app}
                   isDragging={draggableSnapshot.isDragging}
-                  isSelected={selectedAppId === app.id}
-                  onSelect={() =>
-                    onSelectApp(selectedAppId === app.id ? null : app.id)
-                  }
                 />
               </div>
             )}

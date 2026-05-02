@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useCallback } from "react"
 import {
   DragDropContext,
   Droppable,
@@ -17,10 +17,13 @@ import type { Tables } from "@/types/supabase"
 
 type Application = Tables<"applications">
 
-export function KanbanBoard(): React.JSX.Element {
+interface KanbanBoardProps {
+  onSelectApp: (id: string) => void
+}
+
+export function KanbanBoard({ onSelectApp }: KanbanBoardProps): React.JSX.Element {
   const { data: applications = [], isLoading } = useApplications()
   const updateApplication = useUpdateApplication()
-  const [selectedAppId, setSelectedAppId] = useState<string | null>(null)
 
   // Group applications by status
   const grouped = APPLICATION_STATUSES.reduce(
@@ -77,8 +80,7 @@ export function KanbanBoard(): React.JSX.Element {
                 applications={grouped[status]}
                 provided={provided}
                 isDraggingOver={snapshot.isDraggingOver}
-                selectedAppId={selectedAppId}
-                onSelectApp={setSelectedAppId}
+                onSelectApp={onSelectApp}
               />
             )}
           </Droppable>
